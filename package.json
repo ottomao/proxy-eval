@@ -1,0 +1,17 @@
+{
+  "name": "proxyTester",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test"
+  },
+  "author": "Otto Mao <ottomao@gmail.com> (http://ottomao.com/)",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "colorful": "^2.1.0",
+    "http-proxy-agent": "^0.2.6",
+    "https-proxy-agent": "^0.3.5"
+  }
+}
