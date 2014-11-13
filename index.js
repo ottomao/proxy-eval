@@ -69,6 +69,7 @@ function testProxy(proxy,userCallback){
 			ifSuccess && ++successCount; 
 		});
 
+		console.log("");
 		console.log(color.bold("======summary========"));
 		console.log(color.bold("success : %d / %d"),successCount, totalCount);
 		console.log(color.bold("====================="));
@@ -107,7 +108,8 @@ function testSingle(option, callback){
 		length    : 0,
 		finish    : false,
 		error     : null,
-		statusCode: null
+		statusCode: null,
+		_ended    : false //whether callback has been dealed
 	}
 
 	console.log('attempting to test [%j]...', singleRecord.desc);
@@ -117,22 +119,39 @@ function testSingle(option, callback){
 		singleRecord.statusCode = res.statusCode;
 
 		res.on("data",function(data){
+			if(singleRecord._ended) return;
 			length += data.length;
 		});
 
 		res.on("end",function(){
+			if(singleRecord._ended) return;
+
 			singleRecord.end       = Date.now();
 			singleRecord.resHeader = res.headers;
 			singleRecord.length    = length;
 			singleRecord.finish    = true;
+			singleRecord._ended    = true;
 			callback(null,singleRecord);
 		});
 	}).on("error",function(e){
-		console.log("err" + e);
+		if(singleRecord._ended) return;
+
+		singleRecord.error = e;
+		singleRecord._ended    = true;
+		callback(null,singleRecord);
 	});
 
 	option.body && req.write(option.body);
 	req.end();
+
+	setTimeout(function(){ //TODO
+		if(!singleRecord._ended){
+			singleRecord._ended = true;
+			singleRecord.error = new Error("request time out (" + REQ_TIMEOUT + " ms)");
+			callback(null,singleRecord);
+			req.abort();
+		}
+	},REQ_TIMEOUT);
 }
 
 function printData(record){
