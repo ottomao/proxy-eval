@@ -80,7 +80,7 @@ function testProxy(option,userCallback){
 	],function(err,results){
 
 		results.map(function(record, index){
-			record.success = ((record.statusCode == 200) && (record.length > 500) && record.resHeader);
+			record.success = !!((record.statusCode == 200) && (record.length > 500) && record.resHeader);
 		});
 
 		userCallback && userCallback(results);

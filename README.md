@@ -11,7 +11,7 @@ Guide
 * ``npm install proxy-eval --save``
 * 
 
-```
+```javascript
 var testProxy = require("proxy-eval");
 
 testProxy( {proxy : 'http://127.0.0.1:8001',reqTimeout:3000} ,function(results){
@@ -20,5 +20,43 @@ testProxy( {proxy : 'http://127.0.0.1:8001',reqTimeout:3000} ,function(results){
 ```
 
 
+* sample result
 
+```json
+[
+  {
+    "url": "http://www.taobao.com",
+    "method": "GET",
+    "desc": "http: GET http://www.taobao.com",
+    "start": 1415937919621,
+    "end": 1415937919705,
+    "resHeader": {
+   		"foo":"bar"
+    },
+    "length": 45188,
+    "finish": true,
+    "error": null,
+    "statusCode": 200,
+    "_ended": true,
+    "success": true
+  },
+  {
+    "url": "http://www.taobao.com",
+    "method": "POST",
+    "desc": "http: POST http://www.taobao.com",
+    "start": 1415937919625,
+    "end": 1415937919716,
+    "resHeader": {
+   		"foo":"bar"
+    },
+    "length": 45188,
+    "finish": true,
+    "error": null,
+    "statusCode": 200,
+    "_ended": true,
+    "success": true
+  },
+  ...
+]
+```
 
