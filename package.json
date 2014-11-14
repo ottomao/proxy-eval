@@ -1,10 +1,10 @@
 {
-  "name": "proxyTester",
+  "name": "proxy-eval",
   "version": "1.0.0",
-  "description": "",
+  "description": "a tool to evaluate the availibility of a proxy server.",
   "main": "index.js",
   "scripts": {
-    "test": "node test"
+    "test": "node test.js"
   },
   "author": "Otto Mao <ottomao@gmail.com> (http://ottomao.com/)",
   "license": "ISC",

@@ -1,6 +1,12 @@
-'use strict'
+'use strict';
 
-var REQ_TIMEOUT = 5000;
+var DEFAULT_REQ_TIMEOUT = 5000,
+	DEFAULT_HTTP_GET_URL    = "http://www.taobao.com",
+	DEFAULT_HTTP_POST_URL   = "http://www.taobao.com",
+	DEFAULT_HTTP_POST_BODY  = "post body",
+	DEFAULT_HTTPS_GET_URL   = "https://developer.apple.com",
+	DEFAULT_HTTPS_POST_URL  = "https://developer.apple.com",
+	DEFAULT_HTTPS_POST_BODY = "post body";
 
 var url = require('url'),
 	async           = require("async"),
@@ -12,73 +18,74 @@ var url = require('url'),
 
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
-function testProxy(proxy,userCallback){
-	console.log('using proxy server %j', proxy);
+function testProxy(option,userCallback){
+
+	var defaultOption = {
+		httpGetUrl    : DEFAULT_HTTP_GET_URL,
+		httpPostUrl   : DEFAULT_HTTP_POST_URL,
+		httpPostBody  : DEFAULT_HTTP_POST_BODY,
+		httpsGetUrl   : DEFAULT_HTTPS_GET_URL,
+		httpsPostUrl  : DEFAULT_HTTPS_POST_URL,
+		httpsPostBody : DEFAULT_HTTPS_POST_BODY,
+		reqTimeout    : DEFAULT_REQ_TIMEOUT,
+		proxy         : null
+	}
+
+	option = merge(defaultOption,option);
+	if(!option.proxy) throw('please assign a proxy server!');
 
 	async.parallel([
 
 		//HTTP GET
 		function(callback){
 			testSingle({
-				url    :"http://www.taobao.com",
-				proxy  :"http://127.0.0.1:8001",
-				method :"GET"
+				url    :option.httpGetUrl,
+				proxy  :option.proxy,
+				method :"GET",
+				timeout:option.reqTimeout
 			},callback);
 		},
 
 		//HTTP POST
-		function(callback){
+		function(callback){ //TODO : post target
 			testSingle({
-				url    :"http://www.taobao.com",
-				proxy  :"http://127.0.0.1:8001",
+				url    :option.httpPostUrl,
+				proxy  :option.proxy,
 				method :"POST",
-				body   :"test body"
+				body   :option.httpPostBody,
+				timeout:option.reqTimeout
 			},callback);
 		},
 
 		//HTTPS GET
 		function(callback){
 			testSingle({
-				url    :"https://developer.apple.com",
-				proxy  :"http://127.0.0.1:8001",
-				method :"GET"
+				url    :option.httpsGetUrl,
+				proxy  :option.proxy,
+				method :"GET",
+				timeout:option.reqTimeout
 			},callback);
 		},
 
 		//HTTPS POST
 		function(callback){
 			testSingle({
-				url    :"https://developer.apple.com",
-				proxy  :"http://127.0.0.1:8001",
+				url    :option.httpsPostUrl,
+				proxy  :option.proxy,
 				method :"POST",
-				body   :"test body"
+				body   :option.httpsPostBody,
+				timeout:option.reqTimeout
 			},callback);
 		}
 	],function(err,results){
 
-		var successCount = 0,
-			totalCount   = results.length;
-
 		results.map(function(record, index){
-			if(!record) return;
-
-			var ifSuccess = ((record.statusCode == 200) && (record.length > 500) && record.resHeader);
-			record.success = ifSuccess;
-
-			printData(record);
-			ifSuccess && ++successCount; 
+			record.success = ((record.statusCode == 200) && (record.length > 500) && record.resHeader);
 		});
-
-		console.log("");
-		console.log(color.bold("======summary========"));
-		console.log(color.bold("success : %d / %d"),successCount, totalCount);
-		console.log(color.bold("====================="));
 
 		userCallback && userCallback(results);
 	});
 }
-
-//TODO :time out
 
 //option.url
 //option.proxy
@@ -92,16 +99,18 @@ function testSingle(option, callback){
 	
 	var opts = url.parse(endpoint);
 	var proxyModule = /https/.test(opts.protocol) ? HttpsProxyAgent : HttpProxyAgent,
-		reqModule   = /https/.test(opts.protocol) ? https : http;
+		reqModule   = /https/.test(opts.protocol) ? https : http,
+		desc;
 
 	opts.rejectUnauthorized = false;
 	opts.agent = new proxyModule(proxy);
 	opts.method = option.method || "GET";
+	desc = opts.protocol +  " " + opts.method + " " + endpoint;
 	
 	var singleRecord = {
 		url       : endpoint,
 		method    : opts.method,
-		desc      : opts.protocol +  " " + opts.method + " " + endpoint,
+		desc      : desc,
 		start     : Date.now(),
 		end       : null,
 		resHeader : null,
@@ -111,8 +120,6 @@ function testSingle(option, callback){
 		statusCode: null,
 		_ended    : false //whether callback has been dealed
 	}
-
-	console.log('attempting to test [%j]...', singleRecord.desc);
 
 	var req = reqModule.request(opts,function(res){
 		var length = 0;
@@ -144,33 +151,24 @@ function testSingle(option, callback){
 	option.body && req.write(option.body);
 	req.end();
 
-	setTimeout(function(){ //TODO
-		if(!singleRecord._ended){
-			singleRecord._ended = true;
-			singleRecord.error = new Error("request time out (" + REQ_TIMEOUT + " ms)");
-			callback(null,singleRecord);
-			req.abort();
-		}
-	},REQ_TIMEOUT);
+	setTimeout(function(){
+		if(singleRecord._ended) return;
+
+		singleRecord._ended = true;
+		singleRecord.error = new Error("request time out (" + option.timeout + " ms)");
+		callback(null,singleRecord);
+		req.abort();
+
+	},option.timeout);
 }
 
-function printData(record){
-	console.log("");
-
-	if(record.success){
-		console.log(color.green( color.bold("success - " + record.desc) ));
-	}else{
-		console.log(color.red( color.bold("failed - " + record.desc) ));
-		console.log(record.error);
+function merge(baseObj, extendObj){
+	for(var key in extendObj){
+		baseObj[key] = extendObj[key];
 	}
 
-	try{
-		console.log("statusCode - %j",record.statusCode);
-		console.log("content-type - %j", record.resHeader['content-type']);
-		console.log("length - %j byte",record.length);
-		console.log("duration - %j ms",(record.end - record.start));
-		console.log("");
-	}catch(e){}
+	return baseObj;
 }
+
 
 module.exports = testProxy;
