@@ -12,11 +12,11 @@ Guide
 * 
 
 ```javascript
-var testProxy = require("proxy-eval");
+var tester = require("proxy-eval");
 
-testProxy( {proxy : 'http://127.0.0.1:8001',reqTimeout:3000} ,function(results){
-	//results will contain four objects, which are the test result for http-get/http-post/https-get/https-post
-	console.log(results); 
+tester.test({proxy : 'http://127.0.0.1:8001',reqTimeout:3000} ,function(results){
+  tester.printResult(results);
+  process.exit();
 });
 ```
 
