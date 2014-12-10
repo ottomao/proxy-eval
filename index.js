@@ -4,7 +4,7 @@ var DEFAULT_REQ_TIMEOUT = 5000,
 	DEFAULT_HTTP_GET_URL    = "http://www.taobao.com",
 	DEFAULT_HTTP_POST_URL   = "http://www.taobao.com",
 	DEFAULT_HTTP_POST_BODY  = "post body",
-	DEFAULT_HTTPS_GET_URL   = "https://developer.apple.com",
+	DEFAULT_HTTPS_GET_URL   = "https://login.taobao.com",
 	DEFAULT_HTTPS_POST_URL  = "https://developer.apple.com",
 	DEFAULT_HTTPS_POST_BODY = "post body";
 
