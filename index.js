@@ -80,7 +80,7 @@ function test(option,userCallback){
 	],function(err,results){
 
 		results.map(function(record, index){
-			record.success = !!((record.statusCode == 200) && (record.length > 500) && record.resHeader);
+			record.success = !!(record && (record.statusCode == 200) && (record.length > 500) && record.resHeader);
 		});
 
 		userCallback && userCallback(results);
@@ -92,6 +92,11 @@ function test(option,userCallback){
 //option.method
 //option.body (when post)
 function testSingle(option, callback){
+
+	if(!option || !option.url){
+		callback(null,{});
+		return;
+	}
 
 	var endpoint = option.url,
 		proxy    = option.proxy;
